@@ -33,7 +33,7 @@ class Demo(Job):
 
 
 def init():
-    fmt = "%(asctime)s [%(levelname)s] [%(name)s] - %(message)s"
+    fmt = '%(asctime)s [%(levelname)s] [%(name)s] - %(message)s'
     basicConfig(level=INFO, format=fmt)
 
 
