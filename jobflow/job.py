@@ -10,6 +10,11 @@ class Job:
     def __init__(self, name):
         self.name = name
         self.logger = getLogger(name)
+        self.skipped = False
+
+    def skip(self):
+        self.logger.info('残りのタスクをスキップします.')
+        self.skipped = True
 
     def process(self):
         raise NotImplementedError
@@ -20,6 +25,9 @@ class Job:
         self.logger.info('ジョブが正常終了しました.')
 
     def executeTask(self, task, task_name, retry_count=0, retry_interval_ms=5000):
+        if self.skipped:
+            return
+
         self.logger.info('%s を開始します.', task_name)
 
         count = 0
