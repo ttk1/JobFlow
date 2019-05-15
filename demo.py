@@ -17,16 +17,17 @@ class Demo(Job):
             self.count += 1
             raise Exception('エラー')
         print('success!')
-    
+
     def task2(self):
         print('skip!')
         self.skip()
-    
+
     def task3(self):
         print('これは実行されない')
 
     def process(self):
-        self.executeTask(self.task1, 'タスク1', retry_count=5, retry_interval_ms=1000)
+        self.executeTask(self.task1, 'タスク1', retry_count=5,
+                         retry_interval_ms=1000)
         self.executeTask(self.task2, 'タスク2')
         self.executeTask(self.task3, 'タスク3')
 
