@@ -13,21 +13,16 @@ class Demo(Job):
         super().__init__('DEMO')
 
     def task1(self):
-        if self.count < 3:
-            self.count += 1
-            raise Exception('エラー')
-        print('success!')
+        self.info('success!')
 
     def task2(self):
-        print('skip!')
-        self.skip()
+        self.fail('ここでジョブがコケる')
 
     def task3(self):
         print('これは実行されない')
 
     def process(self):
-        self.executeTask(self.task1, 'タスク1', retry_count=5,
-                         retry_interval_ms=1000)
+        self.executeTask(self.task1, 'タスク1')
         self.executeTask(self.task2, 'タスク2')
         self.executeTask(self.task3, 'タスク3')
 

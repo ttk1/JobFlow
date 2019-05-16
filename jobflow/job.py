@@ -8,45 +8,73 @@ from logging import getLogger
 
 class Job:
     def __init__(self, name):
-        self.name = name
-        self.logger = getLogger(name)
-        self.skipped = False
+        self.__logger = getLogger(name)
+        self.__name = name
+        self.__current_task_name = ''
+        self.__skipped = False
+
+    def critical(self, message, *args):
+        if self.__current_task_name:
+            message = '(%s) ' + message
+            args = (self.__current_task_name,) + args
+        self.__logger.critical(message, *args)
+
+    def warning(self, message, *args):
+        if self.__current_task_name:
+            message = '(%s) ' + message
+            args = (self.__current_task_name,) + args
+        self.__logger.warning(message, *args)
+
+    def info(self, message, *args):
+        if self.__current_task_name:
+            message = '(%s) ' + message
+            args = (self.__current_task_name,) + args
+        self.__logger.info(message, *args)
 
     def skip(self):
-        self.logger.info('残りのタスクをスキップします.')
-        self.skipped = True
+        self.info('残りのタスクをスキップします.')
+        self.__skipped = True
+
+    def fail(self, message):
+        raise JobExecutionError(message)
 
     def process(self):
         raise NotImplementedError
 
     def execute(self):
-        self.logger.info('ジョブを開始します.')
+        self.info('ジョブを開始します.')
         self.process()
-        self.logger.info('ジョブが正常終了しました.')
+        self.info('ジョブが正常終了しました.')
 
     def executeTask(self, task, task_name, retry_count=0, retry_interval_ms=5000):
-        if self.skipped:
+        if self.__skipped:
             return
 
-        self.logger.info('%s を開始します.', task_name)
+        self.__current_task_name = task_name
+        self.info('タスクを開始します.')
 
         count = 0
         while count <= retry_count:
             count += 1
             try:
-                self.logger.info('(%s) %s回目の試行中...', task_name, count)
+                self.info('%s回目の試行中...', count)
                 task()
+            except JobExecutionError:
+                self.info('問題が発生したためジョブを緊急停止します.')
+                raise
             except:
-                self.logger.warning('(%s) 試行失敗', task_name)
+                self.warning('タスクが失敗しました.')
                 traceback.print_exc()
                 time.sleep(retry_interval_ms / 1000.0)
             else:
-                self.logger.info('%s が正常終了しました.', task_name)
+                self.info('タスクが正常終了しました.')
+                self.__current_task_name = ''
                 return
 
-        self.logger.critical('%s のリトライ回数が上限に達しました.', task_name)
-        raise TaskExecutionError('タスクのリトライ回数が上限に達しました.')
+        self.critical('リトライ回数が上限に達しました.')
+        self.__current_task_name = ''
+        raise JobExecutionError('タスクのリトライ回数が上限に達しました.')
 
 
-class TaskExecutionError(Exception):
+class JobExecutionError(Exception):
     pass
