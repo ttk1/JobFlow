@@ -16,10 +16,11 @@ class Demo(Job):
         self.info('success!')
 
     def task2(self):
-        self.fail('ここでジョブがコケる')
+        self.critical('ここでジョブがコケる')
+        self.fail()
 
     def task3(self):
-        print('これは実行されない')
+        self.info('これは実行されない')
 
     def process(self):
         self.executeTask(self.task1, 'タスク1')

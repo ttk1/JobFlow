@@ -10,7 +10,7 @@ class Job:
     def __init__(self, name):
         self.__logger = getLogger(name)
         self.__name = name
-        self.__current_task_name = ''
+        self.__current_task_name = None
         self.__skipped = False
 
     def critical(self, message, *args):
@@ -35,8 +35,8 @@ class Job:
         self.info('残りのタスクをスキップします.')
         self.__skipped = True
 
-    def fail(self, message):
-        raise JobExecutionError(message)
+    def fail(self, *message):
+        raise JobExecutionError(*message)
 
     def process(self):
         raise NotImplementedError
@@ -60,19 +60,19 @@ class Job:
                 self.info('%s回目の試行中...', count)
                 task()
             except JobExecutionError:
-                self.info('問題が発生したためジョブを緊急停止します.')
+                self.critical('問題が発生したためジョブを緊急停止します.')
                 raise
             except:
                 self.warning('タスクが失敗しました.')
-                traceback.print_exc()
+                self.warning(traceback.format_exc())
                 time.sleep(retry_interval_ms / 1000.0)
             else:
                 self.info('タスクが正常終了しました.')
-                self.__current_task_name = ''
+                self.__current_task_name = None
                 return
 
         self.critical('リトライ回数が上限に達しました.')
-        self.__current_task_name = ''
+        self.__current_task_name = None
         raise JobExecutionError('タスクのリトライ回数が上限に達しました.')
 
 
