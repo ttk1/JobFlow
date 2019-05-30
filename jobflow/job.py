@@ -78,3 +78,12 @@ class Job:
 
 class JobExecutionError(Exception):
     pass
+
+
+def task(task_name, retry_count=0, retry_interval_ms=5000):
+    def decorator(f):
+        def wrapper(self, *args):
+            self.executeTask(lambda: f(self, *args), task_name,
+                             retry_count, retry_interval_ms)
+        return wrapper
+    return decorator

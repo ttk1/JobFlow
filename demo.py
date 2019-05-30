@@ -3,7 +3,7 @@
 
 from logging import INFO, basicConfig
 
-from jobflow.job import Job
+from jobflow.job import Job, task
 
 
 class Demo(Job):
@@ -12,27 +12,25 @@ class Demo(Job):
     def __init__(self):
         super().__init__('DEMO')
 
+    @task('タスク1')
     def task1(self):
         self.info('success!')
 
+    @task('タスク2', retry_count=5, retry_interval_ms=1000)
     def task2(self):
-        self.critical('ここでジョブがコケる')
-        self.fail()
+        raise Exception('謎のエラー')
 
+    @task('タスク3')
     def task3(self):
         self.info('これは実行されない')
 
     def process(self):
-        self.executeTask(self.task1, 'タスク1')
-        self.executeTask(self.task2, 'タスク2')
-        self.executeTask(self.task3, 'タスク3')
+        self.task1()
+        self.task2()
+        self.task3()
 
 
-def init():
+if __name__ == '__main__':
     fmt = '%(asctime)s [%(levelname)s] [%(name)s] - %(message)s'
     basicConfig(level=INFO, format=fmt)
-
-
-if __name__ == "__main__":
-    init()
     Demo().execute()
