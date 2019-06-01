@@ -13,21 +13,35 @@ class Demo(Job):
         super().__init__('DEMO')
 
     @task('タスク1')
-    def task1(self):
-        self.info('success!')
+    def task1(self, **kwargs):
+        msg = kwargs.get('message', 'NO_MESSAGE')
+        self.info(msg)
 
-    @task('タスク2', retry_count=5, retry_interval_ms=1000)
+    @task('タスク2', retry_count=3, retry_interval_ms=1000)
     def task2(self):
-        raise Exception('謎のエラー')
+        if self.count < 3:
+            self.count += 1
+            self.warning('エラーが起きても指定した回数リトライ')
+            raise Exception('謎のエラー')
+        self.info('SUCCESS')
 
     @task('タスク3')
     def task3(self):
-        self.info('これは実行されない')
+        try:
+            self.critical('ここでジョブがコケる')
+            raise FatalError('致命的なエラー')
+        except FatalError as e:
+            # 致命的なエラーが起きたらジョブを即座に失敗させる
+            self.fail(e)
 
     def process(self):
-        self.task1()
+        self.task1(message='何かのメッセージ')
         self.task2()
         self.task3()
+
+
+class FatalError(Exception):
+    pass
 
 
 if __name__ == '__main__':

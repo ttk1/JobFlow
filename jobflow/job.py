@@ -35,7 +35,8 @@ class Job:
         self.info('残りのタスクをスキップします.')
         self.__skipped = True
 
-    def fail(self, *message):
+    @staticmethod
+    def fail(*message):
         raise JobExecutionError(*message)
 
     def process(self):
@@ -46,7 +47,7 @@ class Job:
         self.process()
         self.info('ジョブが正常終了しました.')
 
-    def executeTask(self, task, task_name, retry_count=0, retry_interval_ms=5000):
+    def executeTask(self, task_func, task_name, retry_count=0, retry_interval_ms=5000):
         if self.__skipped:
             return
 
@@ -58,7 +59,7 @@ class Job:
             count += 1
             try:
                 self.info('%s回目の試行中...', count)
-                task()
+                task_func()
             except JobExecutionError:
                 self.critical('問題が発生したためジョブを緊急停止します.')
                 raise
@@ -81,9 +82,9 @@ class JobExecutionError(Exception):
 
 
 def task(task_name, retry_count=0, retry_interval_ms=5000):
-    def decorator(f):
-        def wrapper(self, *args):
-            self.executeTask(lambda: f(self, *args), task_name,
+    def decorator(task_func):
+        def wrapper(self, *args, **kwargs):
+            self.executeTask(lambda: task_func(self, *args, **kwargs), task_name,
                              retry_count, retry_interval_ms)
         return wrapper
     return decorator
