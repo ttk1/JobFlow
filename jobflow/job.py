@@ -8,32 +8,32 @@ from logging import getLogger
 
 class Job:
     def __init__(self, name):
-        self.__logger = getLogger(name)
-        self.__name = name
-        self.__current_task_name = None
-        self.__skipped = False
+        self.logger = getLogger(name)
+        self.name = name
+        self.current_task_name = None
+        self.skipped = False
 
     def critical(self, message, *args):
-        if self.__current_task_name:
+        if self.current_task_name:
             message = '(%s) ' + message
-            args = (self.__current_task_name,) + args
-        self.__logger.critical(message, *args)
+            args = (self.current_task_name,) + args
+        self.logger.critical(message, *args)
 
     def warning(self, message, *args):
-        if self.__current_task_name:
+        if self.current_task_name:
             message = '(%s) ' + message
-            args = (self.__current_task_name,) + args
-        self.__logger.warning(message, *args)
+            args = (self.current_task_name,) + args
+        self.logger.warning(message, *args)
 
     def info(self, message, *args):
-        if self.__current_task_name:
+        if self.current_task_name:
             message = '(%s) ' + message
-            args = (self.__current_task_name,) + args
-        self.__logger.info(message, *args)
+            args = (self.current_task_name,) + args
+        self.logger.info(message, *args)
 
     def skip(self):
         self.info('残りのタスクをスキップします.')
-        self.__skipped = True
+        self.skipped = True
 
     @staticmethod
     def fail(*message):
@@ -48,10 +48,10 @@ class Job:
         self.info('ジョブが正常終了しました.')
 
     def executeTask(self, task_func, task_name, retry_count=0, retry_interval_ms=5000):
-        if self.__skipped:
+        if self.skipped:
             return
 
-        self.__current_task_name = task_name
+        self.current_task_name = task_name
         self.info('タスクを開始します.')
 
         count = 0
@@ -69,11 +69,11 @@ class Job:
                 time.sleep(retry_interval_ms / 1000.0)
             else:
                 self.info('タスクが正常終了しました.')
-                self.__current_task_name = None
+                self.current_task_name = None
                 return
 
         self.critical('リトライ回数が上限に達しました.')
-        self.__current_task_name = None
+        self.current_task_name = None
         raise JobExecutionError('タスクのリトライ回数が上限に達しました.')
 
 
